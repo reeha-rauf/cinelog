@@ -16,3 +16,18 @@ class UserResponse(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+class FollowResponse(BaseModel):
+    follower_id: int
+    followed_id: int
+
+    class Config:
+        from_attributes = True
+
+class FollowerResponse(BaseModel):
+    id: int
+    username: str
+
+    class config:
+        from_attributes = True
+

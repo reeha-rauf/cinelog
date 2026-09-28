@@ -3,10 +3,11 @@ from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from typing import List
 
 from app.database import SessionLocal
-from app.auth.models import User
-from app.auth.schemas import UserCreate, UserResponse, Token
+from app.auth.models import User, Follow
+from app.auth.schemas import UserCreate, UserResponse, Token, FollowResponse, FollowerResponse
 from app.auth.security import hash_password, verify_password, create_access_token, SECRET_KEY, ALGORITHM
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -59,3 +60,52 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 @router.get("/me", response_model=UserResponse)
 def read_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+@router.post("/follow/{user_id}", response_model=FollowResponse)
+def follow_user(user_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="You cannot follow yourself")
+    target = db.query(User).filter(User.id == user_id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    follow = Follow(follower_id=current_user.id, followed_id=user_id)
+    db.add(follow)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Already following this user")
+    db.refresh(follow)
+    return follow
+
+@router.delete("/unfollow/{user_id}", status_code=204)
+def unfollow_user(user_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    follow = db.query(Follow).filter(
+        Follow.follower_id == current_user.id,
+        Follow.followed_id == user_id
+    ).first()
+
+    if not follow:
+        raise HTTPException(status_code=404, detail="You are not following this user")
+    db.delete(follow)
+    db.commit()
+
+@router.get("/followers/{user_id}", response_model=List[FollowerResponse])
+def get_followers(user_id: int, db: Session = Depends(get_db)):
+    followers = (
+        db.query(User)
+        .join(Follow, Follow.follower_id == User.id)
+        .filter(Follow.followed_id == user_id)
+        .all()
+    )
+    return followers
+
+@router.get("/following/{user_id}", response_model=List[FollowerResponse])
+def get_following(user_id: int, db: Session = Depends(get_db)):
+    following = (
+        db.query(User)
+        .join(Follow, Follow.followed_id == User.id)
+        .filter(Follow.follower_id == user_id)
+        .all()
+    )
+    return following
