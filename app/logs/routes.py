@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
+from typing import List
 
 from app.database import SessionLocal
 from app.auth.models import User
@@ -37,7 +39,16 @@ async def create_log(log_data: WatchLogCreate, current_user: User = Depends(get_
         watched_on=log_data.watched_on,
     )
     db.add(log)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Rating must be between 1 and 5")
     db.refresh(log)
     return log
 
+
+@router .get("/user/{user_id}", response_model=List[WatchLogResponse])
+def get_user_logs(user_id: int, db: Session = Depends(get_db)):
+    logs = db.query(WatchLog).filter(WatchLog.user_id == user_id).order_by(WatchLog.created_at.desc()).all()
+    return logs
