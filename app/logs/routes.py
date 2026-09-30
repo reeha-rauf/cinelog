@@ -4,11 +4,12 @@ from sqlalchemy.exc import IntegrityError
 from typing import List
 
 from app.database import SessionLocal
-from app.auth.models import User
+from app.auth.models import User, Follow
 from app.auth.routes import get_current_user
+from app.movies.models import Movie
 from app.movies.tmdb import get_movie_details, get_or_create_movie
 from app.logs.models import WatchLog, Watchlist
-from app.logs.schemas import WatchLogCreate, WatchLogResponse, WatchlistResponse
+from app.logs.schemas import WatchLogCreate, WatchLogResponse, WatchlistResponse, FeedEntry
 
 
 router = APIRouter(prefix="/logs", tags=["logs"])
@@ -90,3 +91,31 @@ def remove_from_watchlist(movie_id:int, user = Depends(get_current_user), db: Se
 def get_watchlist(user_id: int, db: Session = Depends(get_db)):
     watchlist = db.query(Watchlist).filter(Watchlist.user_id == user_id).order_by(Watchlist.added_at.desc()).all()
     return watchlist
+
+@router.get("feed/", response_model=List[FeedEntry])
+def get_feed(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    results = (
+        db.query(WatchLog, User.username, Movie.title, Movie.poster_url)
+        .join(User, WatchLog.user_id == User.id)
+        .join(Movie, WatchLog.movie_id == Movie.id)
+        .join(Follow, Follow.followed_id == WatchLog.user_id)
+        .filter(Follow.follower_id == current_user.id)
+        .order_by(WatchLog.created_at.desc())
+        .limit(50)
+        .all()
+    )
+
+    feed = []
+    for log, username, title, poster in results:
+        feed.append({
+            "log_id": log.id,
+            "username": username,
+            "movie_title": title,
+            "poster_url": poster,
+            "rating": log.rating,
+            "review": log.review,
+            "watched_on": log.watched_on,
+            "created_at": log.created_at,
+        })
+
+    return feed
