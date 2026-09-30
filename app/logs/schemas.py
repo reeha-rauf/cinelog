@@ -20,4 +20,10 @@ class WatchLogResponse(BaseModel):
     class Config:
         from_attributes = True
 
-    
+
+class WatchlistResponse(BaseModel):
+    user_id: int
+    movie_id: int
+
+    class Config:
+        from_attributes = True
