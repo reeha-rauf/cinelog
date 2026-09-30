@@ -27,3 +27,14 @@ class WatchlistResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class FeedEntry(BaseModel):
+    log_id: int
+    username: str
+    movie_title: str
+    poster_url: str | None
+    rating: int | None
+    review: str | None
+    watched_on: date | None
+    created_at: datetime
