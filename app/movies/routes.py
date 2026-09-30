@@ -1,17 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from app.database import SessionLocal
+from app.database import get_db
 from app.movies.tmdb import search_movies, get_movie_details, get_or_create_movie
 
 
 router = APIRouter(prefix="/movies", tags=["movies"])
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 @router.get("/search")

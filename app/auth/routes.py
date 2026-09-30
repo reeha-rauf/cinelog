@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from typing import List
 
-from app.database import SessionLocal
+from app.database import get_db
 from app.auth.models import User, Follow
 from app.auth.schemas import UserCreate, UserResponse, Token, FollowResponse, FollowerResponse
 from app.auth.security import hash_password, verify_password, create_access_token, SECRET_KEY, ALGORITHM
@@ -13,12 +13,6 @@ from app.auth.security import hash_password, verify_password, create_access_toke
 router = APIRouter(prefix="/auth", tags=["auth"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     try:
