@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from typing import List
 
-from app.database import SessionLocal
+from app.database import get_db
 from app.auth.models import User, Follow
 from app.auth.routes import get_current_user
 from app.movies.models import Movie
@@ -13,14 +13,6 @@ from app.logs.schemas import WatchLogCreate, WatchLogResponse, WatchlistResponse
 
 
 router = APIRouter(prefix="/logs", tags=["logs"])
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 @router.post("/", response_model=WatchLogResponse)
@@ -92,7 +84,7 @@ def get_watchlist(user_id: int, db: Session = Depends(get_db)):
     watchlist = db.query(Watchlist).filter(Watchlist.user_id == user_id).order_by(Watchlist.added_at.desc()).all()
     return watchlist
 
-@router.get("feed/", response_model=List[FeedEntry])
+@router.get("/feed", response_model=List[FeedEntry])
 def get_feed(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     results = (
         db.query(WatchLog, User.username, Movie.title, Movie.poster_url)
