@@ -1,20 +1,15 @@
-import { useState, useEffect } from 'react'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import SignupPage from './pages/SignupPage'
+import LoginPage from './pages/LoginPage'
 
 function App() {
-  const [status, setStatus] = useState('loading...')
-
-  useEffect(() => {
-    fetch('http://localhost:8000/')
-      .then(res => res.json())
-      .then(data => setStatus(data.status))
-      .catch(() => setStatus('failed to connect'))
-  }, [])
-
   return (
-    <div>
-      <h1>Cinelog</h1>
-      <p>Backend status: {status}</p>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/login" element={<LoginPage />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
