@@ -38,6 +38,38 @@ export async function getCurrentUser() {
   return res.json();
 }
 
+export async function getFeed() {
+  const res = await fetch(`${API_BASE}/logs/feed`, {
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    throw new Error('Failed to load feed');
+  }
+  return res.json();
+}
+
+export async function searchMovies(query) {
+  const res = await fetch(`${API_BASE}/movies/search?query=${encodeURIComponent(query)}`, {
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.detail || 'Search failed');
+  }
+  return res.json();
+}
+
+export async function getMovie(tmdbId) {
+  const res = await fetch(`${API_BASE}/movies/${tmdbId}`, {
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.detail || 'Failed to load movie');
+  }
+  return res.json();
+}
+
 export async function logout() {
   await fetch(`${API_BASE}/auth/logout`, {
     method: 'POST',

@@ -21,9 +21,9 @@ function SignupPage() {
   }
 
   return (
-    <div>
+    <div className="auth-card">
       <h1>Sign Up</h1>
-      <form onSubmit={handleSubmit}>
+      <form className="form" onSubmit={handleSubmit}>
         <input
           type="text"
           placeholder="Username"
@@ -42,10 +42,10 @@ function SignupPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <button type="submit">Sign Up</button>
+        <button type="submit" className="btn">Sign Up</button>
       </form>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <p>Already have an account? <Link to="/login">Log in</Link></p>
+      {error && <p className="error">{error}</p>}
+      <p className="muted">Already have an account? <Link to="/login">Log in</Link></p>
     </div>
   )
 }
